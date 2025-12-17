@@ -42,7 +42,7 @@ const Dashboard = () => {
           <div className="text-blue-500">
             <Icon path={Icons.File} />
           </div>
-          <div className="flex-grow">
+          <div className="grow">
             <div className="font-medium text-[#E5E7EB]">{file.name}</div>
             <div className="text-xs text-[#9CA3AF]">{file.type} • {file.size}</div>
           </div>
@@ -123,7 +123,7 @@ const Dashboard = () => {
           {/* Create Post Input */}
           <div className="bg-[#1C1C1E] border border-[#2f2f31] rounded-lg p-4 mb-6">
             <div className="flex gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm">JS</div>
+              <div className="w-10 h-10 bg-blue-600 rounded-full shrink-0 flex items-center justify-center text-white text-sm">JS</div>
               <input 
                 type="text" 
                 placeholder="Share a resource, code snippet, or update..." 
