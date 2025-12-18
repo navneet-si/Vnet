@@ -1,10 +1,12 @@
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import FeedPage from './pages/FeedPage'; 
 import ProfilePage from './pages/ProfilePage';
 import EditProfilePage from './pages/EditProfilePage';
 import MessagesPage from './pages/MessagesPage';
-
+import Login from './components/Login'
+import Signup from "./components/Signup";
 export default function App() {
   return (
     <BrowserRouter>
@@ -19,7 +21,10 @@ export default function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/edit-profile" element={<EditProfilePage />} />
         <Route path='/messages' element={<MessagesPage/>}/>
+        <Route path="/Login" element={<Login />} />
+        <Route path="/Signup" element={<Signup />} />
         </Routes>
     </BrowserRouter>
   );
 }
+
