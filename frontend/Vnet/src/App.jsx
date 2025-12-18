@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout';
 import FeedPage from './pages/FeedPage'; 
 import ProfilePage from './pages/ProfilePage';
 import EditProfilePage from './pages/EditProfilePage';
+import MessagesPage from './pages/MessagesPage';
 
 export default function App() {
   return (
@@ -17,8 +18,8 @@ export default function App() {
         {/* FULL PAGE ROUTES (No Sidebar) */}
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/edit-profile" element={<EditProfilePage />} />
-        
-      </Routes>
+        <Route path='/messages' element={<MessagesPage/>}/>
+        </Routes>
     </BrowserRouter>
   );
 }

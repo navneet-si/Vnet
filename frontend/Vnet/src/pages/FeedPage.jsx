@@ -76,7 +76,7 @@ export default function FeedPage() {
                     />
                     
                     {/* BOTTOM ACTION BAR (Profile Removed) */}
-                    <div className="absolute bottom-6 left-0 w-full z-20 flex items-center justify-center gap-16 px-4 pb-4 bg-gradient-to-t from-black/80 to-transparent pt-12">
+                    <div className="absolute bottom-6 left-0 w-full z-20 flex items-center justify-center gap-16 px-4 pb-4 bg-linear-to-t from-black/80 to-transparent pt-12">
                         
                         {/* Like Button */}
                         <div className="flex flex-col items-center gap-1 group">
