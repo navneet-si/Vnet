@@ -1,40 +1,30 @@
-import './App.css'
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import MainLayout from './layouts/MainLayout';
+import FeedPage from './pages/FeedPage'; 
+import ProfilePage from './pages/ProfilePage';
+import EditProfilePage from './pages/EditProfilePage';
+import MessagesPage from './pages/MessagesPage';
 import Login from './components/Login'
-import Scroller from './components/Scroller'
-import NavBar from './components/NavBar'
-import Dashboard from './components/Dashboard'
 import Signup from "./components/Signup";
-
-function Layout() {
-  const location = useLocation();
-
-  // Hide NavBar on Login page
-  const hideNavBar = location.pathname === "/Login";
-
-  return (
-    <div className="bg-[#0A0A0A] w-screen h-screen text-[#E5E7EB]">
-      
-      {!hideNavBar && <NavBar isVisible={true} />}
-
-      <Routes>
-        <Route path="/" element={<Scroller />} />
-        <Route path="/Dashboard" element={<Dashboard />} />
-        <Route path="/Login" element={<Login />} />
-        <Route path="/Signup" element={<Signup />} />
-      </Routes>
-
-    </div>
-  );
-}
-
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
-      <Layout />
+      <Routes>
+        
+        {/* LAYOUT ROUTES (Sidebar Visible) */}
+        <Route path="/" element={<MainLayout />}>
+           <Route index element={<FeedPage />} /> 
+        </Route>
+
+        {/* FULL PAGE ROUTES (No Sidebar) */}
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/edit-profile" element={<EditProfilePage />} />
+        <Route path='/messages' element={<MessagesPage/>}/>
+        <Route path="/Login" element={<Login />} />
+        <Route path="/Signup" element={<Signup />} />
+        </Routes>
     </BrowserRouter>
   );
 }
 
-export default App;
