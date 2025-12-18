@@ -20,7 +20,8 @@ const getPasswordStrength = (password) => {
 const Signup = () => {
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
+  // IMPORTANT: backend expects `username`
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,13 +29,14 @@ const Signup = () => {
   const [errors, setErrors] = useState({});
   const [shake, setShake] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const strength = getPasswordStrength(password);
 
   const validate = () => {
     const newErrors = {};
 
-    if (!name.trim()) newErrors.name = "Name is required";
+    if (!username.trim()) newErrors.username = "Name is required";
     if (!email.includes("@")) newErrors.email = "Enter a valid email";
     if (password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
@@ -52,16 +54,48 @@ const Signup = () => {
     return true;
   };
 
-  const handleSubmit = (e) => {
+  // 🔐 REAL SIGNUP (BACKEND CONNECTED)
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
-    // Simulate successful signup
-    setSuccess(true);
+    try {
+      setLoading(true);
 
-    setTimeout(() => {
-      navigate("/Login");
-    }, 2200);
+      const res = await fetch("http://localhost:5000/api/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username, // 👈 MUST MATCH BACKEND
+          email,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrors({ api: data.msg || "Signup failed" });
+        setShake(true);
+        setTimeout(() => setShake(false), 400);
+        setLoading(false);
+        return;
+      }
+
+      // SUCCESS
+      setSuccess(true);
+
+      setTimeout(() => {
+        navigate("/Login");
+      }, 2200);
+    } catch (error) {
+      console.error("Signup error:", error);
+      setErrors({ api: "Server error. Try again later." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -100,18 +134,27 @@ const Signup = () => {
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-4">
 
-                {/* Name */}
-                <motion.div {...(shake && errors.name && shakeAnimation)}>
+                {/* API error */}
+                {errors.api && (
+                  <p className="text-red-400 text-sm text-center">
+                    {errors.api}
+                  </p>
+                )}
+
+                {/* Username */}
+                <motion.div {...(shake && errors.username && shakeAnimation)}>
                   <input
                     type="text"
                     placeholder="Full Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg bg-[#111] text-white 
                                border border-white/10 focus:ring-2 focus:ring-indigo-500"
                   />
-                  {errors.name && (
-                    <p className="text-red-400 text-sm mt-1">{errors.name}</p>
+                  {errors.username && (
+                    <p className="text-red-400 text-sm mt-1">
+                      {errors.username}
+                    </p>
                   )}
                 </motion.div>
 
@@ -126,7 +169,9 @@ const Signup = () => {
                                border border-white/10 focus:ring-2 focus:ring-indigo-500"
                   />
                   {errors.email && (
-                    <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                    <p className="text-red-400 text-sm mt-1">
+                      {errors.email}
+                    </p>
                   )}
                 </motion.div>
 
@@ -141,7 +186,6 @@ const Signup = () => {
                                border border-white/10 focus:ring-2 focus:ring-indigo-500"
                   />
 
-                  {/* Strength meter */}
                   {password && (
                     <div className="mt-2">
                       <div className="h-2 w-full bg-white/10 rounded-full">
@@ -195,10 +239,12 @@ const Signup = () => {
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
+                  disabled={loading}
                   className="w-full mt-4 py-3 rounded-lg bg-indigo-600 
-                             hover:bg-indigo-700 transition font-semibold text-white"
+                             hover:bg-indigo-700 transition font-semibold text-white
+                             disabled:opacity-50"
                 >
-                  Sign Up
+                  {loading ? "Creating Account..." : "Sign Up"}
                 </motion.button>
               </form>
             </motion.div>
