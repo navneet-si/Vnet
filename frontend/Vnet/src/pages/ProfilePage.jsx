@@ -1,6 +1,46 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/protected/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6 text-white">Loading...</div>;
+  }
+
+  if (!user) {
+    return <div className="p-6 text-white">Error loading profile</div>;
+  }
+
+  const initials = user.username.charAt(0).toUpperCase();
+  const displayName = user.username || "User";
+  const displayRole = user.role || "Member";
+  const displayLocation = user.location || "";
+
   return (
     <div className="p-6 text-white min-h-full pb-24">
       
@@ -11,22 +51,22 @@ export default function ProfilePage() {
         
         <div className="relative z-10">
             <div className="w-28 h-28 bg-blue-600 rounded-full mx-auto flex items-center justify-center text-4xl text-white font-bold mb-4 border-4 border-[#161616] shadow-xl">
-              JS
+              {initials}
             </div>
-            <h1 className="text-2xl font-bold">John Smith</h1>
-            <p className="text-[#9CA3AF] mb-6">Full Stack Developer • San Francisco</p>
+            <h1 className="text-2xl font-bold">{displayName}</h1>
+            <p className="text-[#9CA3AF] mb-6">{displayRole}{displayLocation ? ` • ${displayLocation}` : ""}</p>
             
             <div className="flex justify-center gap-8 mb-8 border-y border-[#2f2f31] py-4 max-w-md mx-auto">
                 <div className="text-center">
-                    <span className="block font-bold text-xl">142</span>
+                    <span className="block font-bold text-xl">0</span>
                     <span className="text-xs text-gray-500 uppercase tracking-wider">Views</span>
                 </div>
                 <div className="text-center">
-                    <span className="block font-bold text-xl">24</span>
+                    <span className="block font-bold text-xl">0</span>
                     <span className="text-xs text-gray-500 uppercase tracking-wider">Posts</span>
                 </div>
                 <div className="text-center">
-                    <span className="block font-bold text-xl">1.2k</span>
+                    <span className="block font-bold text-xl">0</span>
                     <span className="text-xs text-gray-500 uppercase tracking-wider">Followers</span>
                 </div>
             </div>

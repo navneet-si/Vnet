@@ -1,7 +1,34 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export default function LeftBar() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/protected/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  };
+
+  const initials = user ? user.username.charAt(0).toUpperCase() : "U";
+  const displayName = user ? user.username : "User";
+  const displayEmail = user ? user.email : "";
 
   return (
     <div className="h-full px-6 text-white overflow-y-auto [&::-webkit-scrollbar]:hidden">
@@ -13,11 +40,11 @@ export default function LeftBar() {
       >
         <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold text-sm border-2 border-transparent group-hover:border-white transition">
-                JS
+                {initials}
             </div>
             <div className="overflow-hidden">
-                <h3 className="font-bold text-sm truncate group-hover:text-blue-400 transition">John Smith</h3>
-                <p className="text-xs text-gray-500 truncate">@johnsmith</p>
+                <h3 className="font-bold text-sm truncate group-hover:text-blue-400 transition">{displayName}</h3>
+                <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
             </div>
         </div>
       </div>
