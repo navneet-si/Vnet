@@ -20,7 +20,7 @@ const getPasswordStrength = (password) => {
 const Signup = () => {
   const navigate = useNavigate();
 
-  // IMPORTANT: backend expects `username`
+  // Backend expects `username`
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,7 +68,7 @@ const Signup = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username, // 👈 MUST MATCH BACKEND
+          username,
           email,
           password,
         }),
@@ -100,7 +100,6 @@ const Signup = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A] overflow-hidden">
-
       {/* Glow */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -133,7 +132,6 @@ const Signup = () => {
               </p>
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-
                 {/* API error */}
                 {errors.api && (
                   <p className="text-red-400 text-sm text-center">
@@ -247,6 +245,17 @@ const Signup = () => {
                   {loading ? "Creating Account..." : "Sign Up"}
                 </motion.button>
               </form>
+
+              {/* 🔁 LOGIN REDIRECT */}
+              <p className="text-center text-gray-400 mt-6 text-sm">
+                Already have an account?{" "}
+                <span
+                  onClick={() => navigate("/Login")}
+                  className="text-indigo-400 hover:underline cursor-pointer"
+                >
+                  Login
+                </span>
+              </p>
             </motion.div>
           ) : (
             /* SUCCESS ANIMATION */
