@@ -14,12 +14,39 @@ const Login = () => {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
-  const handleSubmit = (e) => {
+  // 🔐 REAL LOGIN (BACKEND CONNECTED)
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!email || !password) return;
-    navigate("/Dashboard");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.msg || "Login failed");
+        return;
+      }
+
+      // 🔑 SAVE JWT TOKEN
+      localStorage.setItem("token", data.token);
+
+      navigate("/Dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Server error. Please try again.");
+    }
   };
 
+  // Forgot password (UI-only for now)
   const handleForgotSubmit = () => {
     if (!forgotEmail) return;
 
