@@ -5,7 +5,8 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import connectDB from "./config/DB.js";
 import protectedRoutes from "./routes/protected.js";
-
+import forgotPasswordRoutes from "./routes/forgotPassword.js";
+import resetPasswordRoutes from "./routes/resetPassword.js";
 
 dotenv.config();
 connectDB();
@@ -18,6 +19,8 @@ app.use(express.json());
 import signupRoutes from "./routes/signup.js";
 import loginRoutes from "./routes/login.js";
 
+app.use("/api/forgot-password", forgotPasswordRoutes);
+app.use("/api/reset-password", resetPasswordRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/signup", signupRoutes);
 app.use("/api/login", loginRoutes);
