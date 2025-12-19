@@ -37,6 +37,8 @@ const Login = () => {
       }
 
       // 🔑 SAVE JWT TOKEN
+      
+      localStorage.setItem("userId", data.user.id);
       localStorage.setItem("token", data.token);
 
       navigate("/Dashboard");
