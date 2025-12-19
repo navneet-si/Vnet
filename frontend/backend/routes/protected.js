@@ -1,8 +1,11 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
+import upload from "../middleware/upload.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 import Message from "../models/Message.js";
+import Post from "../models/Post.js";
+import Comment from "../models/Comment.js";
 
 const router = express.Router();
 
@@ -272,6 +275,166 @@ router.get("/chat-users", authMiddleware, async (req, res) => {
     res.json(chatUsersWithStatus);
   } catch (error) {
     console.error("Error fetching chat users:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Create a new post (with file upload support)
+router.post("/posts", authMiddleware, upload.fields([{ name: "image", maxCount: 1 }, { name: "video", maxCount: 1 }, { name: "file", maxCount: 1 }]), async (req, res) => {
+  try {
+    const { content, imageUrl, videoUrl, fileUrl } = req.body;
+    
+    if (!content || content.trim() === "") {
+      return res.status(400).json({ msg: "Post content is required" });
+    }
+
+    let finalImageUrl = imageUrl || "";
+    let finalVideoUrl = videoUrl || "";
+    let finalFileUrl = fileUrl || "";
+
+    // Handle uploaded files
+    if (req.files) {
+      if (req.files.image && req.files.image[0]) {
+        finalImageUrl = `http://localhost:5000/uploads/${req.files.image[0].filename}`;
+      }
+      if (req.files.video && req.files.video[0]) {
+        finalVideoUrl = `http://localhost:5000/uploads/${req.files.video[0].filename}`;
+      }
+      if (req.files.file && req.files.file[0]) {
+        finalFileUrl = `http://localhost:5000/uploads/${req.files.file[0].filename}`;
+      }
+    }
+
+    const post = new Post({
+      userId: req.user.id,
+      content: content.trim(),
+      imageUrl: finalImageUrl,
+      videoUrl: finalVideoUrl,
+      fileUrl: finalFileUrl,
+      likes: []
+    });
+
+    await post.save();
+    const postWithUser = await Post.findById(post._id).populate("userId", "username role");
+    
+    res.json({ msg: "Post created", post: postWithUser });
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get all posts (feed)
+router.get("/posts", authMiddleware, async (req, res) => {
+  try {
+    const posts = await Post.find()
+      .populate("userId", "username role")
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    // Get comments count for each post
+    const postsWithComments = await Promise.all(
+      posts.map(async (post) => {
+        const commentsCount = await Comment.countDocuments({ postId: post._id });
+        const isLiked = post.likes.some(
+          id => id.toString() === req.user.id.toString()
+        );
+        
+        return {
+          _id: post._id,
+          userId: post.userId,
+          content: post.content,
+          imageUrl: post.imageUrl,
+          videoUrl: post.videoUrl,
+          likesCount: post.likes.length,
+          isLiked: isLiked,
+          commentsCount: commentsCount,
+          createdAt: post.createdAt
+        };
+      })
+    );
+
+    res.json(postsWithComments);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Like/Unlike a post
+router.post("/posts/:id/like", authMiddleware, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    
+    if (!post) {
+      return res.status(404).json({ msg: "Post not found" });
+    }
+
+    const userId = req.user.id;
+    const isLiked = post.likes.some(id => id.toString() === userId.toString());
+
+    if (isLiked) {
+      // Unlike
+      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+    } else {
+      // Like
+      post.likes.push(userId);
+    }
+
+    await post.save();
+    res.json({ 
+      msg: isLiked ? "Post unliked" : "Post liked",
+      likesCount: post.likes.length,
+      isLiked: !isLiked
+    });
+  } catch (error) {
+    console.error("Error liking post:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Add a comment to a post
+router.post("/posts/:id/comment", authMiddleware, async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text || text.trim() === "") {
+      return res.status(400).json({ msg: "Comment text is required" });
+    }
+
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ msg: "Post not found" });
+    }
+
+    const comment = new Comment({
+      postId: req.params.id,
+      userId: req.user.id,
+      text: text.trim()
+    });
+
+    await comment.save();
+    const commentWithUser = await Comment.findById(comment._id)
+      .populate("userId", "username role");
+
+    res.json({ msg: "Comment added", comment: commentWithUser });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get comments for a post
+router.get("/posts/:id/comments", authMiddleware, async (req, res) => {
+  try {
+    const comments = await Comment.find({ postId: req.params.id })
+      .populate("userId", "username role")
+      .sort({ createdAt: 1 })
+      .limit(100);
+
+    res.json(comments);
+  } catch (error) {
+    console.error("Error fetching comments:", error);
     res.status(500).json({ msg: "Server error" });
   }
 });
