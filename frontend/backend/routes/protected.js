@@ -153,6 +153,31 @@ router.get("/followers", authMiddleware, async (req, res) => {
   }
 });
 
+// Get users that current user is following
+router.get("/following", authMiddleware, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id);
+    
+    // Find all users whose followers array contains current user's ID
+    const following = await User.find({ followers: req.user.id })
+      .select("-password");
+    
+    const followingWithStatus = following.map(user => {
+      const isFollowing = user.followers && user.followers.some(
+        id => id.toString() === currentUser._id.toString()
+      );
+      return {
+        ...user.toObject(),
+        isFollowing: isFollowing || false
+      };
+    });
+    
+    res.json(followingWithStatus);
+  } catch (error) {
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 router.get("/notifications", authMiddleware, async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.id })
@@ -346,6 +371,7 @@ router.get("/posts", authMiddleware, async (req, res) => {
           content: post.content,
           imageUrl: post.imageUrl,
           videoUrl: post.videoUrl,
+          fileUrl: post.fileUrl,
           likesCount: post.likes.length,
           isLiked: isLiked,
           commentsCount: commentsCount,
@@ -357,6 +383,43 @@ router.get("/posts", authMiddleware, async (req, res) => {
     res.json(postsWithComments);
   } catch (error) {
     console.error("Error fetching posts:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get posts by user ID
+router.get("/posts/user/:userId", authMiddleware, async (req, res) => {
+  try {
+    const posts = await Post.find({ userId: req.params.userId })
+      .populate("userId", "username role")
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    const postsWithComments = await Promise.all(
+      posts.map(async (post) => {
+        const commentsCount = await Comment.countDocuments({ postId: post._id });
+        const isLiked = post.likes.some(
+          id => id.toString() === req.user.id.toString()
+        );
+        
+        return {
+          _id: post._id,
+          userId: post.userId,
+          content: post.content,
+          imageUrl: post.imageUrl,
+          videoUrl: post.videoUrl,
+          fileUrl: post.fileUrl,
+          likesCount: post.likes.length,
+          isLiked: isLiked,
+          commentsCount: commentsCount,
+          createdAt: post.createdAt
+        };
+      })
+    );
+
+    res.json(postsWithComments);
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
     res.status(500).json({ msg: "Server error" });
   }
 });
