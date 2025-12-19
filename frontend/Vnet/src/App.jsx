@@ -4,6 +4,7 @@ import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import MessagesPage from "./pages/MessagesPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="edit-profile" element={<EditProfilePage />} />
           <Route path="messages" element={<MessagesPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
 
         {/* PUBLIC ROUTES */}

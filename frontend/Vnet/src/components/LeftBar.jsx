@@ -4,9 +4,20 @@ import { useState, useEffect } from 'react';
 export default function LeftBar() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     fetchUser();
+    fetchSuggestedUsers();
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 5000);
+    const handleUpdate = () => fetchUnreadCount();
+    window.addEventListener('notificationsUpdated', handleUpdate);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notificationsUpdated', handleUpdate);
+    };
   }, []);
 
   const fetchUser = async () => {
@@ -23,6 +34,59 @@ export default function LeftBar() {
       }
     } catch (error) {
       console.error("Error fetching user:", error);
+    }
+  };
+
+  const fetchSuggestedUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/protected/suggested-users", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuggestedUsers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching suggested users:", error);
+    }
+  };
+
+  const handleFollow = async (userId, isFollowing) => {
+    try {
+      const token = localStorage.getItem("token");
+      const endpoint = isFollowing ? "unfollow" : "follow";
+      const res = await fetch(`http://localhost:5000/api/protected/${endpoint}/${userId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        fetchSuggestedUsers();
+      }
+    } catch (error) {
+      console.error("Error following user:", error);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/protected/notifications", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const unread = data.filter(n => !n.read).length;
+        setUnreadCount(unread);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
     }
   };
 
@@ -72,10 +136,13 @@ export default function LeftBar() {
 
             {/* Notifications */}
             <li>
-                <div className="flex items-center gap-3 text-gray-400 hover:text-white hover:bg-[#1C1C1E] px-4 py-3 rounded-xl transition font-medium cursor-pointer">
+                <Link to="/notifications" className="flex items-center gap-3 text-gray-400 hover:text-white hover:bg-[#1C1C1E] px-4 py-3 rounded-xl transition font-medium relative">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     Notifications
-                </div>
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                    )}
+                </Link>
             </li>
         </ul>
       </div>
@@ -84,22 +151,31 @@ export default function LeftBar() {
       <div className="border-t border-white/5 pt-6">
         <h2 className="font-bold text-gray-400 mb-4 uppercase text-xs tracking-wider">Suggested</h2>
         <div className="space-y-4">
-             <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">D</div>
-                 <div className="flex-1">
-                     <p className="text-sm font-bold truncate">DesignDaily</p>
-                     <p className="text-xs text-gray-500">New Account</p>
+             {suggestedUsers.map((suggestedUser) => {
+               const suggestedInitials = suggestedUser.username ? suggestedUser.username.charAt(0).toUpperCase() : "U";
+               const colors = ['bg-purple-600', 'bg-orange-600', 'bg-blue-600', 'bg-green-600', 'bg-pink-600'];
+               const colorIndex = suggestedUser.username ? suggestedUser.username.charCodeAt(0) % colors.length : 0;
+               const isFollowing = suggestedUser.isFollowing || false;
+               return (
+                 <div key={suggestedUser._id} className="flex items-center gap-3">
+                     <div className={`w-8 h-8 rounded-full ${colors[colorIndex]} flex items-center justify-center text-xs font-bold`}>
+                         {suggestedInitials}
+                     </div>
+                     <div className="flex-1">
+                         <p className="text-sm font-bold truncate">{suggestedUser.username || "User"}</p>
+                         <p className="text-xs text-gray-500 truncate">{suggestedUser.role || "Member"}</p>
+                     </div>
+                     <button 
+                       onClick={() => handleFollow(suggestedUser._id, isFollowing)}
+                       className={`text-xs font-bold hover:text-white transition ${
+                         isFollowing ? "text-gray-400" : "text-blue-500"
+                       }`}
+                     >
+                       {isFollowing ? "Following" : "Follow"}
+                     </button>
                  </div>
-                 <button className="text-blue-500 text-xs font-bold hover:text-white transition">Follow</button>
-             </div>
-             <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center text-xs font-bold">R</div>
-                 <div className="flex-1">
-                     <p className="text-sm font-bold truncate">ReactJobs</p>
-                     <p className="text-xs text-gray-500">Popular</p>
-                 </div>
-                 <button className="text-blue-500 text-xs font-bold hover:text-white transition">Follow</button>
-             </div>
+               );
+             })}
         </div>
       </div>
 
