@@ -26,9 +26,9 @@ export default function App() {
           <Route index element={<FeedPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="edit-profile" element={<EditProfilePage />} />
-          <Route path="messages" element={<MessagesPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
+          <Route path="messages" element={<MessagesPage />} />
 
         {/* PUBLIC ROUTES */}
         <Route path="/login" element={<Login />} />
