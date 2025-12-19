@@ -1,12 +1,24 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [followers, setFollowers] = useState([]);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUser();
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchUser();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const fetchUser = async () => {
@@ -25,6 +37,47 @@ export default function ProfilePage() {
       console.error("Error fetching user:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFollowers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/protected/followers", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFollowers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+    }
+  };
+
+  const handleFollowersClick = () => {
+    setShowFollowers(true);
+    fetchFollowers();
+  };
+
+  const handleFollow = async (userId, isFollowing) => {
+    try {
+      const token = localStorage.getItem("token");
+      const endpoint = isFollowing ? "unfollow" : "follow";
+      const res = await fetch(`http://localhost:5000/api/protected/${endpoint}/${userId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        fetchFollowers();
+        fetchUser();
+      }
+    } catch (error) {
+      console.error("Error following user:", error);
     }
   };
 
@@ -65,8 +118,8 @@ export default function ProfilePage() {
                     <span className="block font-bold text-xl">0</span>
                     <span className="text-xs text-gray-500 uppercase tracking-wider">Posts</span>
                 </div>
-                <div className="text-center">
-                    <span className="block font-bold text-xl">0</span>
+                <div className="text-center cursor-pointer hover:text-blue-400 transition" onClick={handleFollowersClick}>
+                    <span className="block font-bold text-xl">{user.followersCount || 0}</span>
                     <span className="text-xs text-gray-500 uppercase tracking-wider">Followers</span>
                 </div>
             </div>
@@ -80,39 +133,70 @@ export default function ProfilePage() {
       {/* 2. User's Content List */}
       <h2 className="font-bold text-gray-400 mb-4 uppercase tracking-wider text-xs">Recent Activity</h2>
       
-      {/* Sample Post 1 */}
-      <div className="bg-[#1C1C1E] border border-[#2f2f31] rounded-xl p-5 mb-4">
-        <div className="flex gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">JS</div>
-            <div>
-                <h4 className="font-semibold text-white">John Smith</h4>
-                <p className="text-xs text-gray-500">2h ago</p>
-            </div>
-        </div>
-        <p className="text-gray-300 text-sm mb-3">Here is the updated UI Kit for the new mobile dashboard.</p>
-        <div className="bg-[#0A0A0A] border border-[#2f2f31] rounded-lg p-3 flex items-center gap-3">
-             <div className="text-blue-500">📄</div>
-             <div className="text-sm">
-                <div className="font-medium text-gray-200">Dashboard_UI.fig</div>
-                <div className="text-xs text-gray-500">12.4 MB</div>
-             </div>
-        </div>
+      <div className="bg-[#1C1C1E] border border-[#2f2f31] rounded-xl p-8 text-center">
+        <p className="text-gray-400">No recent activity</p>
       </div>
 
-       {/* Sample Post 2 */}
-       <div className="bg-[#1C1C1E] border border-[#2f2f31] rounded-xl p-5 mb-4">
-        <div className="flex gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">JS</div>
-            <div>
-                <h4 className="font-semibold text-white">John Smith</h4>
-                <p className="text-xs text-gray-500">5h ago</p>
+      {/* Followers Modal */}
+      {showFollowers && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowFollowers(false)}>
+          <div className="bg-[#1C1C1E] border border-[#2f2f31] rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Followers</h2>
+              <button onClick={() => setShowFollowers(false)} className="text-gray-400 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
             </div>
+            
+            <div className="space-y-3">
+              {followers.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No followers yet</p>
+              ) : (
+                followers.map((follower) => {
+                  const followerInitials = follower.username ? follower.username.charAt(0).toUpperCase() : "U";
+                  const colors = ['bg-purple-600', 'bg-orange-600', 'bg-blue-600', 'bg-green-600', 'bg-pink-600'];
+                  const colorIndex = follower.username ? follower.username.charCodeAt(0) % colors.length : 0;
+                  const isFollowing = follower.isFollowing || false;
+                  return (
+                    <div key={follower._id} className="flex items-center gap-3 p-3 bg-[#0A0A0A] rounded-xl border border-[#2f2f31]">
+                      <div className={`w-10 h-10 rounded-full ${colors[colorIndex]} flex items-center justify-center text-sm font-bold`}>
+                        {followerInitials}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-bold text-sm">{follower.username || "User"}</p>
+                        <p className="text-xs text-gray-500">{follower.role || "Member"}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleFollow(follower._id, isFollowing)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${
+                            isFollowing 
+                              ? "bg-gray-700 text-gray-300 hover:bg-gray-600" 
+                              : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
+                        >
+                          {isFollowing ? "Unfollow" : "Follow"}
+                        </button>
+                        <button 
+                          onClick={() => navigate('/messages')}
+                          className="p-2 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition"
+                          title="Chat"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
-        <p className="text-gray-300 text-sm mb-3">Just pushed the new Python scripts for data cleaning.</p>
-        <div className="h-40 bg-gray-800 rounded-lg flex items-center justify-center text-gray-500 text-sm border border-white/5">
-            [Code Snippet Preview]
-        </div>
-      </div>
+      )}
 
     </div>
   );
