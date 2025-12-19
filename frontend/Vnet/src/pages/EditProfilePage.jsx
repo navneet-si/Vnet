@@ -1,7 +1,58 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export default function EditProfilePage() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [username, setUsername] = useState('');
+  const [role, setRole] = useState('');
+  const [bio, setBio] = useState('');
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/protected/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data);
+        setUsername(data.username || '');
+        setRole(data.role || '');
+        setBio(data.bio || '');
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/protected/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ username, role, bio }),
+      });
+      if (res.ok) {
+        navigate('/profile');
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  const initials = user ? user.username.charAt(0).toUpperCase() : "U";
 
   return (
     <div className="p-6 text-white min-h-full">
@@ -18,29 +69,41 @@ export default function EditProfilePage() {
         {/* Photo Upload */}
         <div className="flex flex-col items-center gap-4 py-4 border-b border-[#2f2f31]">
             <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center text-3xl font-bold text-white relative">
-                JS
-                <div className="absolute bottom-0 right-0 bg-white text-black p-1.5 rounded-full cursor-pointer border-2 border-[#1C1C1E]">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                </div>
+                {initials}
             </div>
             <button className="text-blue-400 text-sm font-medium hover:text-blue-300">Change Profile Photo</button>
         </div>
 
         {/* Form Fields */}
-        <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); navigate('/profile'); }}>
+        <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
                 <label className="block text-gray-400 text-xs uppercase font-bold mb-2 ml-1">Display Name</label>
-                <input type="text" defaultValue="John Smith" className="w-full bg-[#0A0A0A] border border-[#2f2f31] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition placeholder-gray-600" />
+                <input 
+                  type="text" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full bg-[#0A0A0A] border border-[#2f2f31] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition placeholder-gray-600" 
+                />
             </div>
 
             <div>
                 <label className="block text-gray-400 text-xs uppercase font-bold mb-2 ml-1">Role / Job</label>
-                <input type="text" defaultValue="Full Stack Developer" className="w-full bg-[#0A0A0A] border border-[#2f2f31] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition placeholder-gray-600" />
+                <input 
+                  type="text" 
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full bg-[#0A0A0A] border border-[#2f2f31] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition placeholder-gray-600" 
+                />
             </div>
 
             <div>
                 <label className="block text-gray-400 text-xs uppercase font-bold mb-2 ml-1">Bio</label>
-                <textarea rows="4" defaultValue="Building things for the web." className="w-full bg-[#0A0A0A] border border-[#2f2f31] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition placeholder-gray-600 resize-none"></textarea>
+                <textarea 
+                  rows="4" 
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="w-full bg-[#0A0A0A] border border-[#2f2f31] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition placeholder-gray-600 resize-none"
+                ></textarea>
             </div>
 
             <div className="pt-4">

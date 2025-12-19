@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 export default function LeftBar() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
 
   useEffect(() => {
     fetchUser();
+    fetchSuggestedUsers();
   }, []);
 
   const fetchUser = async () => {
@@ -23,6 +25,23 @@ export default function LeftBar() {
       }
     } catch (error) {
       console.error("Error fetching user:", error);
+    }
+  };
+
+  const fetchSuggestedUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/protected/suggested-users", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuggestedUsers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching suggested users:", error);
     }
   };
 
@@ -84,22 +103,23 @@ export default function LeftBar() {
       <div className="border-t border-white/5 pt-6">
         <h2 className="font-bold text-gray-400 mb-4 uppercase text-xs tracking-wider">Suggested</h2>
         <div className="space-y-4">
-             <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">D</div>
-                 <div className="flex-1">
-                     <p className="text-sm font-bold truncate">DesignDaily</p>
-                     <p className="text-xs text-gray-500">New Account</p>
+             {suggestedUsers.map((suggestedUser) => {
+               const suggestedInitials = suggestedUser.username ? suggestedUser.username.charAt(0).toUpperCase() : "U";
+               const colors = ['bg-purple-600', 'bg-orange-600', 'bg-blue-600', 'bg-green-600', 'bg-pink-600'];
+               const colorIndex = suggestedUser.username ? suggestedUser.username.charCodeAt(0) % colors.length : 0;
+               return (
+                 <div key={suggestedUser._id} className="flex items-center gap-3">
+                     <div className={`w-8 h-8 rounded-full ${colors[colorIndex]} flex items-center justify-center text-xs font-bold`}>
+                         {suggestedInitials}
+                     </div>
+                     <div className="flex-1">
+                         <p className="text-sm font-bold truncate">{suggestedUser.username || "User"}</p>
+                         <p className="text-xs text-gray-500 truncate">{suggestedUser.role || "Member"}</p>
+                     </div>
+                     <button className="text-blue-500 text-xs font-bold hover:text-white transition">Follow</button>
                  </div>
-                 <button className="text-blue-500 text-xs font-bold hover:text-white transition">Follow</button>
-             </div>
-             <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center text-xs font-bold">R</div>
-                 <div className="flex-1">
-                     <p className="text-sm font-bold truncate">ReactJobs</p>
-                     <p className="text-xs text-gray-500">Popular</p>
-                 </div>
-                 <button className="text-blue-500 text-xs font-bold hover:text-white transition">Follow</button>
-             </div>
+               );
+             })}
         </div>
       </div>
 
