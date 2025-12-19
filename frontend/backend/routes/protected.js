@@ -2,6 +2,7 @@ import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
+import Message from "../models/Message.js";
 
 const router = express.Router();
 
@@ -170,6 +171,107 @@ router.put("/notifications/:id/read", authMiddleware, async (req, res) => {
     await notification.save();
     res.json({ msg: "Notification marked as read" });
   } catch (error) {
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Save a message
+router.post("/messages", authMiddleware, async (req, res) => {
+  try {
+    const { roomId, receiverId, text } = req.body;
+    
+    if (!roomId || !receiverId || !text) {
+      return res.status(400).json({ msg: "Missing required fields" });
+    }
+
+    const message = new Message({
+      roomId,
+      senderId: req.user.id,
+      receiverId,
+      text
+    });
+
+    await message.save();
+    res.json({ msg: "Message saved", message });
+  } catch (error) {
+    console.error("Error saving message:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get message history for a chat room
+router.get("/messages/:roomId", authMiddleware, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    
+    const messages = await Message.find({ roomId })
+      .populate("senderId", "username")
+      .sort({ createdAt: 1 })
+      .limit(100);
+
+    // Format messages for frontend
+    const formattedMessages = messages.map(msg => ({
+      id: msg._id,
+      text: msg.text,
+      sender: msg.senderId._id.toString() === req.user.id ? "me" : "other",
+      timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      createdAt: msg.createdAt
+    }));
+
+    res.json(formattedMessages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get list of users you have messaged with (chat conversations)
+router.get("/chat-users", authMiddleware, async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    
+    // Find all messages where current user is sender or receiver
+    const messages = await Message.find({
+      $or: [
+        { senderId: currentUserId },
+        { receiverId: currentUserId }
+      ]
+    })
+    .populate("senderId", "username role")
+    .populate("receiverId", "username role")
+    .sort({ createdAt: -1 });
+
+    // Get unique user IDs that current user has messaged with
+    const chatUserIds = new Set();
+    messages.forEach(msg => {
+      const senderId = msg.senderId._id.toString();
+      const receiverId = msg.receiverId._id.toString();
+      if (senderId === currentUserId) {
+        chatUserIds.add(receiverId);
+      } else {
+        chatUserIds.add(senderId);
+      }
+    });
+
+    // Fetch user details for all chat users
+    const chatUsers = await User.find({ _id: { $in: Array.from(chatUserIds) } })
+      .select("-password");
+
+    // Add isFollowing status
+    const currentUser = await User.findById(currentUserId);
+    const chatUsersWithStatus = chatUsers.map(user => {
+      const isFollowing = currentUser.followers && currentUser.followers.some(
+        id => id.toString() === user._id.toString()
+      );
+      return {
+        ...user.toObject(),
+        isFollowing: isFollowing || false
+      };
+    });
+
+    res.json(chatUsersWithStatus);
+  } catch (error) {
+    console.error("Error fetching chat users:", error);
     res.status(500).json({ msg: "Server error" });
   }
 });

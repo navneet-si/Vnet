@@ -9,7 +9,7 @@ const initialConversations = [
   { id: 4, name: "Marketing Team", avatar: "MT", color: "bg-red-500", status: "online", lastMessage: "Meeting at 3 PM confirmed." },
 ];
 
-const socket = io('http://localhost:3001');
+const socket = io('http://localhost:5000');
 
 export default function MessagesPage() {
   const [activeChat, setActiveChat] = useState(initialConversations[0]);

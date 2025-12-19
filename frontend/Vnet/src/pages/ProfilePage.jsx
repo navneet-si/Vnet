@@ -180,7 +180,7 @@ export default function ProfilePage() {
                           {isFollowing ? "Unfollow" : "Follow"}
                         </button>
                         <button 
-                          onClick={() => navigate('/messages')}
+                          onClick={() => navigate(`/messages?userId=${follower._id}&username=${encodeURIComponent(follower.username || 'User')}`)}
                           className="p-2 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition"
                           title="Chat"
                         >
