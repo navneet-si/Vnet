@@ -44,6 +44,33 @@ router.put("/profile", authMiddleware, async (req, res) => {
   }
 });
 
+// 🔍 SEARCH USERS (NAVBAR SEARCH)
+router.get("/search-users", authMiddleware, async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.trim().length < 2) {
+      return res.json([]);
+    }
+
+    const users = await User.find({
+      _id: { $ne: req.user.id },
+      $or: [
+        { username: { $regex: q, $options: "i" } },
+        { email: { $regex: q, $options: "i" } },
+      ],
+    })
+      .select("_id username email")
+      .limit(10);
+
+    res.json(users);
+  } catch (error) {
+    console.error("Search users error:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+
 router.get("/suggested-users", authMiddleware, async (req, res) => {
   try {
     const currentUser = await User.findById(req.user.id);
