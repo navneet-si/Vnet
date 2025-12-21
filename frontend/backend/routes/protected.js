@@ -73,7 +73,6 @@ router.get("/search-users", authMiddleware, async (req, res) => {
   }
 });
 
-
 router.get("/suggested-users", authMiddleware, async (req, res) => {
   try {
     const currentUser = await User.findById(req.user.id);
@@ -499,6 +498,7 @@ router.get("/posts", authMiddleware, async (req, res) => {
           likesCount: post.likes.length,
           isLiked: isLiked,
           commentsCount: commentsCount,
+          viewsCount: post.views || 0,
           createdAt: post.createdAt,
         };
       })
@@ -538,6 +538,7 @@ router.get("/posts/user/:userId", authMiddleware, async (req, res) => {
           likesCount: post.likes.length,
           isLiked: isLiked,
           commentsCount: commentsCount,
+          viewsCount: post.views || 0,
           createdAt: post.createdAt,
         };
       })
@@ -546,6 +547,43 @@ router.get("/posts/user/:userId", authMiddleware, async (req, res) => {
     res.json(postsWithComments);
   } catch (error) {
     console.error("Error fetching user posts:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Increment view count for a post
+router.post("/posts/:id/view", authMiddleware, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ msg: "Post not found" });
+    }
+
+    const userId = req.user.id;
+
+    // Check if user has already viewed this post
+    if (!post.viewedBy) {
+      post.viewedBy = [];
+    }
+
+    const hasViewed = post.viewedBy.some(
+      (id) => id.toString() === userId.toString()
+    );
+
+    if (!hasViewed) {
+      // Only increment if user hasn't viewed before
+      post.viewedBy.push(userId);
+      post.views = (post.views || 0) + 1;
+      await post.save();
+    }
+
+    res.json({
+      msg: "View recorded",
+      viewsCount: post.views || 0,
+    });
+  } catch (error) {
+    console.error("Error recording view:", error);
     res.status(500).json({ msg: "Server error" });
   }
 });
