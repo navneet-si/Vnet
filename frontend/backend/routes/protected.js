@@ -20,7 +20,13 @@ router.get("/profile", authMiddleware, async (req, res) => {
       return res.status(404).json({ msg: "User not found" });
     }
     const followersCount = user.followers ? user.followers.length : 0;
-    res.json({ ...user.toObject(), followersCount });
+
+    // Count how many users the current user is following
+    const followingCount = await User.countDocuments({
+      followers: req.user.id,
+    });
+
+    res.json({ ...user.toObject(), followersCount, followingCount });
   } catch (error) {
     res.status(500).json({ msg: "Server error" });
   }
