@@ -14,7 +14,7 @@ export default function RightBar({ activePost }) {
   const views = activePost.stats?.views || "0";
 
   return (
-    <div className="h-full px-6 pb-6 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+    <div className="h-full px-6 pb-6 overflow-y-auto [&::-webkit-scrollbar]:hidden pt-4">
       
       {/* 1. USER & CAPTION */}
       <div className="mb-8 mt-2">
@@ -43,8 +43,8 @@ export default function RightBar({ activePost }) {
       <hr className="border-white/5 mb-8" />
 
       {/* 2. ANALYTICS */}
-      <div className="mb-8">
-        <h2 className="font-bold text-gray-400 mb-4 uppercase tracking-wider text-xs">Analytics</h2>
+      <div className="mb-8 absolute right-12 bottom-0">
+        <h2 className="font-bold text-gray-400 mb-4 uppercase tracking-wider flex justify-center text-xs">Analytics</h2>
         <div className="grid grid-cols-3 gap-2 text-center bg-[#1C1C1E] border border-[#2f2f31] rounded-xl p-4">
             <div>
                 <div className="text-lg font-bold text-white">{views}</div>

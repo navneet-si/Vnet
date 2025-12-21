@@ -5,6 +5,7 @@ import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import MessagesPage from "./pages/MessagesPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import CreatePost from "./pages/CreatePost"; 
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -27,7 +28,9 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="edit-profile" element={<EditProfilePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="create-post" element={<CreatePost />} />
         </Route>
+          
           <Route path="messages" element={<MessagesPage />} />
 
         {/* PUBLIC ROUTES */}

@@ -114,27 +114,36 @@ export default function NavBar({ isVisible }) {
     <>
       {/* NAVBAR */}
       <div
-        className={`fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center
-        bg-[#1C1C1E] border-b border-white/5 shadow-xl transition-transform
+        className={`fixed top-0 left-0 w-full z-50 px-6 py-2.5 flex justify-between items-center
+        bg-gradient-to-r from-[#0a0a0a] via-[#111111] to-[#0a0a0a] 
+        border-b border-white/10 shadow-2xl backdrop-blur-xl transition-transform duration-300
         ${isVisible ? "translate-y-0" : "-translate-y-full"}`}
       >
-        <div className="text-[#1851ec] font-bold text-3xl">Vnet.</div>
+        {/* Logo with gradient */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <span className="text-white font-bold text-base">V</span>
+          </div>
+          <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-bold text-2xl">
+            Vnet
+          </span>
+        </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* 🔍 SEARCH */}
-          <div className="relative w-80" ref={searchRef}>
-            <div className="flex items-center">
-              <Search className="mr-2 text-gray-400" />
+          <div className="relative w-96" ref={searchRef}>
+            <div className="flex items-center bg-gradient-to-r from-[#1a1a1c] to-[#0f0f10] rounded-2xl px-3 py-2 border border-white/10 shadow-lg hover:border-blue-500/50 transition-all">
+              <Search className="text-blue-400" size={18} />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search users..."
-                className="w-full px-4 py-2 rounded-2xl bg-transparent ring-2 ring-blue-800 text-white outline-none"
+                className="flex-1 ml-3 bg-transparent text-white text-sm placeholder-gray-500 outline-none"
               />
               {loading && (
-                <Loader2 className="animate-spin ml-2 text-blue-500" />
+                <Loader2 className="animate-spin text-blue-500" size={18} />
               )}
             </div>
 
@@ -142,60 +151,73 @@ export default function NavBar({ isVisible }) {
             <AnimatePresence>
               {showDropdown && (
                 <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute top-12 w-full bg-[#1C1C1E] border border-white/10 rounded-xl shadow-xl overflow-hidden"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-16 w-full bg-gradient-to-b from-[#1a1a1c] to-[#0f0f10] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
                 >
                   {results.length > 0 ? (
                     results.map((u, i) => (
                       <div
                         key={u._id}
                         onClick={() => handleMessage(u)}
-                        className={`px-4 py-3 cursor-pointer flex justify-between items-center
+                        className={`px-5 py-4 cursor-pointer flex justify-between items-center transition-all
                         ${
                           i === highlightIndex
-                            ? "bg-white/10"
+                            ? "bg-gradient-to-r from-blue-600/20 to-purple-600/20"
                             : "hover:bg-white/5"
                         }`}
                       >
                         <div>
-                          <p className="text-sm font-semibold">{u.username}</p>
+                          <p className="text-sm font-semibold text-white">{u.username}</p>
                           <p className="text-xs text-gray-400">{u.email}</p>
                         </div>
-                        <button className="text-xs bg-blue-600 px-3 py-1 rounded">
+                        <button className="text-xs bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 rounded-lg font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all">
                           Message
                         </button>
                       </div>
                     ))
                   ) : query.length >= 2 ? (
-                    <p className="p-4 text-sm text-gray-400 text-center">
-                      ❌ No users found
+                    <p className="p-6 text-sm text-gray-400 text-center">
+                      No users found
                     </p>
                   ) : (
-                    recentSearches.map((u) => (
-                      <div
-                        key={u._id}
-                        onClick={() => handleMessage(u)}
-                        className="px-4 py-3 hover:bg-white/5 cursor-pointer"
-                      >
-                        <p className="text-sm">{u.username}</p>
-                        <p className="text-xs text-gray-500">{u.email}</p>
-                      </div>
-                    ))
+                    <>
+                      {recentSearches.length > 0 && (
+                        <div className="px-5 py-3 border-b border-white/5">
+                          <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Recent Searches</p>
+                        </div>
+                      )}
+                      {recentSearches.map((u) => (
+                        <div
+                          key={u._id}
+                          onClick={() => handleMessage(u)}
+                          className="px-5 py-4 hover:bg-white/5 cursor-pointer transition-all"
+                        >
+                          <p className="text-sm text-white font-medium">{u.username}</p>
+                          <p className="text-xs text-gray-500">{u.email}</p>
+                        </div>
+                      ))}
+                    </>
                   )}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          <BellRing />
+          {/* Notification Bell */}
+          <button className="relative p-3 rounded-full bg-gradient-to-br from-[#1a1a1c] to-[#0f0f10] border border-white/10 hover:border-blue-500/50 transition-all shadow-lg hover:shadow-blue-500/20 group">
+            <BellRing className="text-gray-400 group-hover:text-blue-400 transition-colors" size={20} />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+          </button>
 
+          {/* User Profile */}
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="border rounded-full p-2 hover:bg-white/10"
+            className="p-3 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 border border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/30 transition-all"
           >
-            <User />
+            <User className="text-white" size={20} />
           </button>
         </div>
       </div>
@@ -203,24 +225,36 @@ export default function NavBar({ isVisible }) {
       {/* LOGOUT MODAL */}
       <AnimatePresence>
         {showLogoutConfirm && (
-          <motion.div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+          >
             <motion.div
               ref={modalRef}
-              className="bg-[#111] p-6 rounded-xl w-[90%] max-w-sm text-center"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gradient-to-br from-[#1a1a1c] to-[#0f0f10] border border-white/10 p-8 rounded-3xl w-[90%] max-w-md text-center shadow-2xl"
             >
-              <p className="mb-4 text-lg">Do you want to log out?</p>
-              <div className="flex justify-center gap-4">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg shadow-red-500/30">
+                <LogOut size={28} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Log Out?</h3>
+              <p className="text-gray-400 mb-6">Are you sure you want to log out of your account?</p>
+              <div className="flex justify-center gap-3">
                 <button
                   onClick={handleLogout}
-                  className="bg-red-600 px-5 py-2 rounded-lg flex gap-2"
+                  className="bg-gradient-to-r from-red-600 to-orange-600 px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-red-500/30 transition-all flex items-center gap-2"
                 >
-                  <LogOut size={16} /> Yes
+                  <LogOut size={18} /> Yes, Log Out
                 </button>
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="bg-gray-700 px-5 py-2 rounded-lg"
+                  className="bg-white/5 border border-white/10 px-6 py-3 rounded-xl font-semibold hover:bg-white/10 transition-all"
                 >
-                  No
+                  Cancel
                 </button>
               </div>
             </motion.div>
