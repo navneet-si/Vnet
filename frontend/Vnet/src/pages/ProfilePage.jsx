@@ -182,12 +182,12 @@ export default function ProfilePage() {
           {users.length === 0 ? (
             <p className="text-gray-400 text-center py-8">List is empty</p>
           ) : (
-            users.map((person) => {
+            users.map((person, index) => {
               const isFollowingTarget =
                 title === "Following" ? true : person.isFollowing || false;
               return (
                 <div
-                  key={person._id}
+                  key={`${title}-${person._id}-${index}`}
                   className="flex items-center gap-3 p-3 bg-[#0A0A0A] rounded-xl border border-[#2f2f31]"
                 >
                   <div className="w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center text-sm font-bold">
@@ -203,6 +203,33 @@ export default function ProfilePage() {
                       {person.role || "Member"}
                     </p>
                   </div>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      navigate(
+                        `/messages?userId=${
+                          person._id
+                        }&username=${encodeURIComponent(person.username)}`
+                      );
+                    }}
+                    className="p-2 rounded-lg bg-[#2f2f31] hover:bg-blue-600 text-gray-400 hover:text-white transition"
+                    title="Message"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                  </button>
                   <button
                     onClick={() => handleFollow(person._id, isFollowingTarget)}
                     className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${

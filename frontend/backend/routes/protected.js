@@ -257,29 +257,78 @@ router.put("/notifications/:id/read", authMiddleware, async (req, res) => {
   }
 });
 
-// Save a message
-router.post("/messages", authMiddleware, async (req, res) => {
-  try {
-    const { roomId, receiverId, text } = req.body;
+// Save a message (with optional file attachment)
+router.post(
+  "/messages",
+  authMiddleware,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const { roomId, receiverId, text } = req.body;
 
-    if (!roomId || !receiverId || !text) {
-      return res.status(400).json({ msg: "Missing required fields" });
+      if (!roomId || !receiverId) {
+        return res.status(400).json({ msg: "Missing required fields" });
+      }
+
+      // Must have either text or file
+      if (!text && !req.file) {
+        return res.status(400).json({ msg: "Message must have text or file" });
+      }
+
+      // Determine file type
+      let fileType = null;
+      if (req.file) {
+        const mimeType = req.file.mimetype;
+        if (mimeType.startsWith("image/")) {
+          fileType = "image";
+        } else if (mimeType.startsWith("video/")) {
+          fileType = "video";
+        } else if (mimeType.startsWith("audio/")) {
+          fileType = "audio";
+        } else if (mimeType === "application/pdf") {
+          fileType = "pdf";
+        } else {
+          fileType = "document";
+        }
+      }
+
+      const message = new Message({
+        roomId,
+        senderId: req.user.id,
+        receiverId,
+        text: text || "",
+        fileUrl: req.file ? `/uploads/${req.file.filename}` : null,
+        fileName: req.file ? req.file.originalname : null,
+        fileType: fileType,
+        fileSize: req.file ? req.file.size : null,
+      });
+
+      await message.save();
+
+      // Return formatted message for frontend
+      res.json({
+        msg: "Message saved",
+        message: {
+          id: message._id,
+          text: message.text,
+          fileUrl: message.fileUrl,
+          fileName: message.fileName,
+          fileType: message.fileType,
+          fileSize: message.fileSize,
+          sender: "me",
+          timestamp: new Date(message.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          roomId: message.roomId,
+        },
+      });
+    } catch (error) {
+      console.error("Error saving message:", error);
+      res.status(500).json({ msg: "Server error" });
     }
-
-    const message = new Message({
-      roomId,
-      senderId: req.user.id,
-      receiverId,
-      text,
-    });
-
-    await message.save();
-    res.json({ msg: "Message saved", message });
-  } catch (error) {
-    console.error("Error saving message:", error);
-    res.status(500).json({ msg: "Server error" });
   }
-});
+);
 
 // Get message history for a chat room
 router.get("/messages/:roomId", authMiddleware, async (req, res) => {
@@ -301,6 +350,10 @@ router.get("/messages/:roomId", authMiddleware, async (req, res) => {
     const formattedMessages = messages.map((msg) => ({
       id: msg._id,
       text: msg.text,
+      fileUrl: msg.fileUrl,
+      fileName: msg.fileName,
+      fileType: msg.fileType,
+      fileSize: msg.fileSize,
       sender: msg.senderId._id.toString() === req.user.id ? "me" : "other",
       timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
         hour: "2-digit",

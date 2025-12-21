@@ -13,7 +13,12 @@ const MessageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    text: { type: String, required: true },
+    text: { type: String, default: "" },
+    // File attachment fields
+    fileUrl: { type: String, default: null },
+    fileName: { type: String, default: null },
+    fileType: { type: String, default: null }, // 'image', 'video', 'document', etc.
+    fileSize: { type: Number, default: null },
     read: { type: Boolean, default: false },
   },
   { timestamps: true }

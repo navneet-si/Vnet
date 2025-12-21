@@ -42,11 +42,35 @@ app.use("/api/signup", signupRoutes);
 app.use("/api/login", loginRoutes);
 app.use("/api/posts", postRoutes);
 
-// ... (Socket.IO and Server Listen code remains the same) ...
-
+// -------------------- SOCKET.IO SETUP --------------------
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
-// ... existing socket code ...
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("🔌 User connected:", socket.id);
+
+  socket.on("join_room", (roomId) => {
+    socket.join(roomId);
+    console.log(`👤 User ${socket.id} joined room: ${roomId}`);
+  });
+
+  socket.on("send_message", (data) => {
+    socket.to(data.conversationId).emit("receive_message", data);
+    console.log("📨 Message sent to room:", data.conversationId);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ User disconnected:", socket.id);
+  });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
