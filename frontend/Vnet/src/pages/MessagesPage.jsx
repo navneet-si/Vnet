@@ -292,12 +292,7 @@ export default function MessagesPage() {
       <div className="w-1/3 max-w-sm border-r border-white/5 flex flex-col bg-[#161616]">
         <div className="p-6 border-b border-white/5 flex items-center justify-between">
           <h2 className="text-xl font-bold">Messages</h2>
-          <button
-            onClick={() => navigate("/")}
-            className="text-xs text-blue-400 hover:text-blue-300"
-          >
-            Back to Feed
-          </button>
+          <button onClick={() => navigate('/dashboard')} className="text-xs text-blue-400 hover:text-blue-300">Back</button>
         </div>
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {followers.length === 0 ? (
